@@ -7,6 +7,48 @@ You can also see [Python](https://github.com/starlangsoftware/TurkishDeasciifier
 [C++](https://github.com/starlangsoftware/TurkishDeasciifier-CPP), [Swift](https://github.com/starlangsoftware/TurkishDeasciifier-Swift), 
 [Cython](https://github.com/starlangsoftware/TurkishDeasciifier-Cy) or [C#](https://github.com/starlangsoftware/TurkishDeasciifier-CS) repository.
 
+## Requirements
+
+* [Node.js 14 or higher](#Node.js)
+* [Git](#git)
+
+### Node.js 
+
+To check if you have a compatible version of Node.js installed, use the following command:
+
+    node -v
+    
+You can find the latest version of Node.js [here](https://nodejs.org/en/download/).
+
+### Git
+
+Install the [latest version of Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+
+## Npm Install
+
+	npm install nlptoolkit-deasciifier
+	
+## Download Code
+
+In order to work on code, create a fork from GitHub page. 
+Use Git for cloning the code to your local or below line for Ubuntu:
+
+	git clone <your-fork-git-link>
+
+A directory called util will be created. Or you can use below link for exploring the code:
+
+	git clone https://github.com/starlangsoftware/turkishdeasciifier-js.git
+
+## Open project with Webstorm IDE
+
+Steps for opening the cloned project:
+
+* Start IDE
+* Select **File | Open** from main menu
+* Choose `Deasciifier-Js` file
+* Select open as project option
+* Couple of seconds, dependencies will be downloaded. 
+
 Detailed Description
 ============
 
@@ -17,10 +59,10 @@ Detailed Description
 
 Asciifier converts text to a format containing only ASCII letters. This can be instantiated and used as follows:
 
-      asciifier = SimpleAsciifier()
-      sentence = Sentence("çocuk")
-      asciified = asciifier.asciify(sentence)
-      print(asciified)
+      let asciifier = SimpleAsciifier()
+      let sentence = Sentence("çocuk")
+      let asciified = asciifier.asciify(sentence)
+      console.log(asciified)
 
 Output:
     
@@ -35,8 +77,8 @@ Deasciifier converts text written with only ASCII letters to its correct form us
 
     The instantiation can be done as follows:  
     
-        fsm = FsmMorphologicalAnalyzer()
-        deasciifier = SimpleDeasciifier(fsm)
+        let fsm = FsmMorphologicalAnalyzer()
+        let deasciifier = SimpleDeasciifier(fsm)
      
 * `NGramDeasciifier`
     
@@ -44,32 +86,32 @@ Deasciifier converts text written with only ASCII letters to its correct form us
     
     * `FsmMorphologicalAnalyzer` can be instantiated as follows:
         
-            fsm = FsmMorphologicalAnalyzer()
+            let fsm = FsmMorphologicalAnalyzer()
     
     * `NGram` can be either trained from scratch or loaded from an existing model.
         
         * Training from scratch:
                 
-                corpus = Corpus("corpus.txt")
-                ngram = NGram(corpus.getAllWordsAsArrayList(), 1)
-                ngram.calculateNGramProbabilities(LaplaceSmoothing())
+                let corpus = Corpus("corpus.txt")
+                let ngram = NGram(corpus.getAllWords(), 1)
+                ngram.calculateNGramProbabilities(new LaplaceSmoothing())
                 
         *There are many smoothing methods available. For other smoothing methods, check [here](https://github.com/olcaytaner/NGram).*       
         * Loading from an existing model:
      
-                    ngram = NGram("ngram.txt")
+                    let ngram = NGram("ngram.txt")
 
-	*For further details, please check [here](https://github.com/starlangsoftware/NGram).*        
+	*For further details, please check [here](https://github.com/starlangsoftware/NGram-Js).*        
             
     * Afterwards, `NGramDeasciifier` can be created as below:
         
-            deasciifier = NGramDeasciifier(fsm, ngram)
+            let deasciifier = NGramDeasciifier(fsm, ngram)
      
 A text can be deasciified as follows:
      
-    sentence = Sentence("cocuk")
-    deasciified = deasciifier.deasciify(sentence)
-    print(deasciified)
+    let sentence = Sentence("cocuk")
+    let deasciified = deasciifier.deasciify(sentence)
+    console.log(deasciified)
     
 Output:
 
