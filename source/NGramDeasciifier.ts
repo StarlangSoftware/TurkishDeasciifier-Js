@@ -3,12 +3,14 @@ import {NGram} from "nlptoolkit-ngram/dist/NGram"
 import {FsmMorphologicalAnalyzer} from "nlptoolkit-morphologicalanalysis/dist/MorphologicalAnalysis/FsmMorphologicalAnalyzer";
 import {Sentence} from "nlptoolkit-corpus/dist/Sentence";
 import {Word} from "nlptoolkit-dictionary/dist/Dictionary/Word";
+import * as fs from "fs";
 
 export class NGramDeasciifier extends SimpleDeasciifier{
 
     private nGram: NGram<string>
     private rootNGram: boolean
     private threshold: number = 0.0
+    private asciifiedSame: Map<string, string>
 
     /**
      * A constructor of {@link NGramDeasciifier} class which takes an {@link FsmMorphologicalAnalyzer} and an {@link NGram}
@@ -23,6 +25,8 @@ export class NGramDeasciifier extends SimpleDeasciifier{
         super(fsm);
         this.nGram = nGram
         this.rootNGram = rootNGram
+        this.asciifiedSame = new Map<string, string>()
+        this.loadAsciifiedSameList()
     }
 
     /**
@@ -66,52 +70,81 @@ export class NGramDeasciifier extends SimpleDeasciifier{
      * @return Sentence result as output.
      */
     deasciify(sentence: Sentence): Sentence {
+        var candidates : Array<string>
+        var isAsciifiedSame : boolean
         let previousRoot = undefined
-        let result = new Sentence();
-        let root = this.checkAnalysisAndSetRoot(sentence, 0);
-        let nextRoot = this.checkAnalysisAndSetRoot(sentence, 1);
-        for (let i = 0; i < sentence.wordCount(); i++) {
-            let word = sentence.getWord(i);
-            if (root == undefined){
-                let candidates = this.candidateList(word);
-                let bestCandidate = word.getName();
-                let bestRoot = word;
-                let bestProbability = this.threshold;
-                for (let candidate of candidates) {
-                    let fsmParses = this.fsm.morphologicalAnalysis(candidate);
-                    if (this.rootNGram){
-                        root = fsmParses.getParseWithLongestRootWord().getWord();
-                    } else {
-                        root = new Word(candidate);
-                    }
-                    let previousProbability
-                    if (previousRoot != null) {
-                        previousProbability = this.getProbability(previousRoot.getName(), root.getName());
-                    } else {
-                        previousProbability = 0.0;
-                    }
-                    let nextProbability
-                    if (nextRoot != undefined) {
-                        nextProbability = this.getProbability(root.getName(), nextRoot.getName());
-                    } else {
-                        nextProbability = 0.0;
-                    }
-                    if (Math.max(previousProbability, nextProbability) > bestProbability) {
-                        bestCandidate = candidate;
-                        bestRoot = root;
-                        bestProbability = Math.max(previousProbability, nextProbability);
-                    }
+        let result = new Sentence()
+        let root = this.checkAnalysisAndSetRoot(sentence, 0)
+        let nextRoot = this.checkAnalysisAndSetRoot(sentence, 1)
+        for (let repeat = 0; repeat < 2; repeat++){
+            for (let i = 0; i < sentence.wordCount(); i++) {
+                candidates = new Array<string>()
+                isAsciifiedSame = false
+                let word = sentence.getWord(i)
+                if (this.asciifiedSame.has(word.getName())){
+                    candidates.push(word.getName())
+                    candidates.push(this.asciifiedSame.get(word.getName()))
+                    isAsciifiedSame = true
                 }
-                root = bestRoot;
-                result.addWord(new Word(bestCandidate));
-            } else {
-                result.addWord(word);
+                if (root == undefined || isAsciifiedSame){
+                    if (!isAsciifiedSame){
+                        candidates = this.candidateList(word)
+                    }
+                    let bestCandidate = word.getName()
+                    let bestRoot = word;
+                    let bestProbability = this.threshold
+                    for (let candidate of candidates) {
+                        let fsmParses = this.fsm.morphologicalAnalysis(candidate);
+                        if (this.rootNGram && !isAsciifiedSame){
+                            root = fsmParses.getParseWithLongestRootWord().getWord()
+                        } else {
+                            root = new Word(candidate)
+                        }
+                        let previousProbability
+                        if (previousRoot != null) {
+                            previousProbability = this.getProbability(previousRoot.getName(), root.getName())
+                        } else {
+                            previousProbability = 0.0
+                        }
+                        let nextProbability
+                        if (nextRoot != undefined) {
+                            nextProbability = this.getProbability(root.getName(), nextRoot.getName())
+                        } else {
+                            nextProbability = 0.0
+                        }
+                        if (Math.max(previousProbability, nextProbability) > bestProbability) {
+                            bestCandidate = candidate;
+                            bestRoot = root;
+                            bestProbability = Math.max(previousProbability, nextProbability)
+                        }
+                    }
+                    root = bestRoot;
+                    result.addWord(new Word(bestCandidate));
+                } else {
+                    result.addWord(word);
+                }
+                previousRoot = root;
+                root = nextRoot;
+                nextRoot = this.checkAnalysisAndSetRoot(sentence, i + 2);
             }
-            previousRoot = root;
-            root = nextRoot;
-            nextRoot = this.checkAnalysisAndSetRoot(sentence, i + 2);
+            sentence = result
+            if (repeat < 1){
+                result = new Sentence()
+                previousRoot = undefined
+                root = this.checkAnalysisAndSetRoot(sentence, 0)
+                nextRoot = this.checkAnalysisAndSetRoot(sentence, 1)
+            }
         }
         return result;
+    }
+
+    loadAsciifiedSameList(){
+        let data = fs.readFileSync("asciified-same.txt", 'utf8')
+        let lines = data.split("\n")
+        for (let line of lines){
+            let list = line.split(" ")
+            this.asciifiedSame.set(list[0], list[1])
+        }
     }
 
 }

@@ -4,7 +4,7 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "./SimpleDeasciifier", "nlptoolkit-corpus/dist/Sentence", "nlptoolkit-dictionary/dist/Dictionary/Word"], factory);
+        define(["require", "exports", "./SimpleDeasciifier", "nlptoolkit-corpus/dist/Sentence", "nlptoolkit-dictionary/dist/Dictionary/Word", "fs"], factory);
     }
 })(function (require, exports) {
     "use strict";
@@ -13,6 +13,7 @@
     const SimpleDeasciifier_1 = require("./SimpleDeasciifier");
     const Sentence_1 = require("nlptoolkit-corpus/dist/Sentence");
     const Word_1 = require("nlptoolkit-dictionary/dist/Dictionary/Word");
+    const fs = require("fs");
     class NGramDeasciifier extends SimpleDeasciifier_1.SimpleDeasciifier {
         /**
          * A constructor of {@link NGramDeasciifier} class which takes an {@link FsmMorphologicalAnalyzer} and an {@link NGram}
@@ -28,6 +29,8 @@
             this.threshold = 0.0;
             this.nGram = nGram;
             this.rootNGram = rootNGram;
+            this.asciifiedSame = new Map();
+            this.loadAsciifiedSameList();
         }
         /**
          * Checks the morphological analysis of the given word in the given index. If there is no misspelling, it returns
@@ -68,56 +71,84 @@
          * @return Sentence result as output.
          */
         deasciify(sentence) {
+            var candidates;
+            var isAsciifiedSame;
             let previousRoot = undefined;
             let result = new Sentence_1.Sentence();
             let root = this.checkAnalysisAndSetRoot(sentence, 0);
             let nextRoot = this.checkAnalysisAndSetRoot(sentence, 1);
-            for (let i = 0; i < sentence.wordCount(); i++) {
-                let word = sentence.getWord(i);
-                if (root == undefined) {
-                    let candidates = this.candidateList(word);
-                    let bestCandidate = word.getName();
-                    let bestRoot = word;
-                    let bestProbability = this.threshold;
-                    for (let candidate of candidates) {
-                        let fsmParses = this.fsm.morphologicalAnalysis(candidate);
-                        if (this.rootNGram) {
-                            root = fsmParses.getParseWithLongestRootWord().getWord();
-                        }
-                        else {
-                            root = new Word_1.Word(candidate);
-                        }
-                        let previousProbability;
-                        if (previousRoot != null) {
-                            previousProbability = this.getProbability(previousRoot.getName(), root.getName());
-                        }
-                        else {
-                            previousProbability = 0.0;
-                        }
-                        let nextProbability;
-                        if (nextRoot != undefined) {
-                            nextProbability = this.getProbability(root.getName(), nextRoot.getName());
-                        }
-                        else {
-                            nextProbability = 0.0;
-                        }
-                        if (Math.max(previousProbability, nextProbability) > bestProbability) {
-                            bestCandidate = candidate;
-                            bestRoot = root;
-                            bestProbability = Math.max(previousProbability, nextProbability);
-                        }
+            for (let repeat = 0; repeat < 2; repeat++) {
+                for (let i = 0; i < sentence.wordCount(); i++) {
+                    candidates = new Array();
+                    isAsciifiedSame = false;
+                    let word = sentence.getWord(i);
+                    if (this.asciifiedSame.has(word.getName())) {
+                        candidates.push(word.getName());
+                        candidates.push(this.asciifiedSame.get(word.getName()));
+                        isAsciifiedSame = true;
                     }
-                    root = bestRoot;
-                    result.addWord(new Word_1.Word(bestCandidate));
+                    if (root == undefined || isAsciifiedSame) {
+                        if (!isAsciifiedSame) {
+                            candidates = this.candidateList(word);
+                        }
+                        let bestCandidate = word.getName();
+                        let bestRoot = word;
+                        let bestProbability = this.threshold;
+                        for (let candidate of candidates) {
+                            let fsmParses = this.fsm.morphologicalAnalysis(candidate);
+                            if (this.rootNGram && !isAsciifiedSame) {
+                                root = fsmParses.getParseWithLongestRootWord().getWord();
+                            }
+                            else {
+                                root = new Word_1.Word(candidate);
+                            }
+                            let previousProbability;
+                            if (previousRoot != null) {
+                                previousProbability = this.getProbability(previousRoot.getName(), root.getName());
+                            }
+                            else {
+                                previousProbability = 0.0;
+                            }
+                            let nextProbability;
+                            if (nextRoot != undefined) {
+                                nextProbability = this.getProbability(root.getName(), nextRoot.getName());
+                            }
+                            else {
+                                nextProbability = 0.0;
+                            }
+                            if (Math.max(previousProbability, nextProbability) > bestProbability) {
+                                bestCandidate = candidate;
+                                bestRoot = root;
+                                bestProbability = Math.max(previousProbability, nextProbability);
+                            }
+                        }
+                        root = bestRoot;
+                        result.addWord(new Word_1.Word(bestCandidate));
+                    }
+                    else {
+                        result.addWord(word);
+                    }
+                    previousRoot = root;
+                    root = nextRoot;
+                    nextRoot = this.checkAnalysisAndSetRoot(sentence, i + 2);
                 }
-                else {
-                    result.addWord(word);
+                sentence = result;
+                if (repeat < 1) {
+                    result = new Sentence_1.Sentence();
+                    previousRoot = undefined;
+                    root = this.checkAnalysisAndSetRoot(sentence, 0);
+                    nextRoot = this.checkAnalysisAndSetRoot(sentence, 1);
                 }
-                previousRoot = root;
-                root = nextRoot;
-                nextRoot = this.checkAnalysisAndSetRoot(sentence, i + 2);
             }
             return result;
+        }
+        loadAsciifiedSameList() {
+            let data = fs.readFileSync("asciified-same.txt", 'utf8');
+            let lines = data.split("\n");
+            for (let line of lines) {
+                let list = line.split(" ");
+                this.asciifiedSame.set(list[0], list[1]);
+            }
         }
     }
     exports.NGramDeasciifier = NGramDeasciifier;

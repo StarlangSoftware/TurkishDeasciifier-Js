@@ -6,6 +6,7 @@ export declare class NGramDeasciifier extends SimpleDeasciifier {
     private nGram;
     private rootNGram;
     private threshold;
+    private asciifiedSame;
     /**
      * A constructor of {@link NGramDeasciifier} class which takes an {@link FsmMorphologicalAnalyzer} and an {@link NGram}
      * as inputs. It first calls it super class {@link SimpleDeasciifier} with given {@link FsmMorphologicalAnalyzer} input
@@ -38,4 +39,5 @@ export declare class NGramDeasciifier extends SimpleDeasciifier {
      * @return Sentence result as output.
      */
     deasciify(sentence: Sentence): Sentence;
+    loadAsciifiedSameList(): void;
 }
