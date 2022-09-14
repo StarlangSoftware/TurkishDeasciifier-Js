@@ -79,7 +79,7 @@
             let nextRoot = this.checkAnalysisAndSetRoot(sentence, 1);
             for (let repeat = 0; repeat < 2; repeat++) {
                 for (let i = 0; i < sentence.wordCount(); i++) {
-                    candidates = new Array();
+                    candidates = [];
                     isAsciifiedSame = false;
                     let word = sentence.getWord(i);
                     if (this.asciifiedSame.has(word.getName())) {
