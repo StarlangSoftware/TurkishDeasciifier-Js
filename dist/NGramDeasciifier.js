@@ -116,7 +116,7 @@
                             else {
                                 nextProbability = 0.0;
                             }
-                            if (Math.max(previousProbability, nextProbability) > bestProbability) {
+                            if (Math.max(previousProbability, nextProbability) > bestProbability || candidates.length == 1) {
                                 bestCandidate = candidate;
                                 bestRoot = root;
                                 bestProbability = Math.max(previousProbability, nextProbability);
