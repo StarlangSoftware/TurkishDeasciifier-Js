@@ -25,7 +25,17 @@ export declare class NGramDeasciifier extends SimpleDeasciifier {
      * @return If the word is misspelled, null; otherwise the longest root word of the possible analyses.
      */
     private checkAnalysisAndSetRoot;
+    /**
+     * Sets minimum N-Gram probability threshold for replacement candidates.
+     * @param threshold New N-Gram probability threshold
+     */
     setThreshold(threshold: number): void;
+    /**
+     * Returns the bi-gram probability P(word2 | word1) for the given bigram consisting of two words.
+     * @param word1 First word in bi-gram
+     * @param word2 Second word in bi-gram
+     * @return Bi-gram probability P(word2 | word1)
+     */
     private getProbability;
     /**
      * The deasciify method takes a {@link Sentence} as an input. First it creates a String {@link Array} as candidates,
@@ -39,5 +49,9 @@ export declare class NGramDeasciifier extends SimpleDeasciifier {
      * @return Sentence result as output.
      */
     deasciify(sentence: Sentence): Sentence;
+    /**
+     * Loads asciified same word list. Asciified same words are the words whose asciified versions are also
+     * valid Turkish words. For example, ascified version of 'ekşi' is 'eksi', ascified version of 'fön' is 'fon'.
+     */
     loadAsciifiedSameList(): void;
 }

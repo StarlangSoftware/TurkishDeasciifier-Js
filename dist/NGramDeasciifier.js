@@ -53,9 +53,19 @@
             }
             return undefined;
         }
+        /**
+         * Sets minimum N-Gram probability threshold for replacement candidates.
+         * @param threshold New N-Gram probability threshold
+         */
         setThreshold(threshold) {
             this.threshold = threshold;
         }
+        /**
+         * Returns the bi-gram probability P(word2 | word1) for the given bigram consisting of two words.
+         * @param word1 First word in bi-gram
+         * @param word2 Second word in bi-gram
+         * @return Bi-gram probability P(word2 | word1)
+         */
         getProbability(word1, word2) {
             return this.nGram.getProbability(word1, word2);
         }
@@ -142,6 +152,10 @@
             }
             return result;
         }
+        /**
+         * Loads asciified same word list. Asciified same words are the words whose asciified versions are also
+         * valid Turkish words. For example, ascified version of 'ekşi' is 'eksi', ascified version of 'fön' is 'fon'.
+         */
         loadAsciifiedSameList() {
             let data = fs.readFileSync("asciified-same.txt", 'utf8');
             let lines = data.split("\n");
